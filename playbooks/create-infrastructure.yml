@@ -1,0 +1,37 @@
+---
+# create nginx nodes 
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  user: root
+  roles:
+    - ~/dev/ansible-aws-assignment/roles/create-nginx
+
+# create haproxy node 
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  user: root
+  roles:
+    - ~/dev/ansible-aws-assignment/roles/create-haproxy
+    
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Wait for the instances to boot by checking the ssh port
+      wait_for: host={{item}} port=22 delay=30 timeout=320 state=started
+      with_items: 
+        - "{{ groups['nginx'] }}" 
+        - "{{ groups['haproxy'] }}" 
+
+- hosts: nginx
+  gather_facts: false
+  become: true
+  roles:
+    - ~/dev/ansible-aws-assignment/roles/install-nginx
+    
+- hosts: haproxy
+  gather_facts: false
+  become: true
+  roles:
+    - ~/dev/ansible-aws-assignment/roles/install-haproxy
